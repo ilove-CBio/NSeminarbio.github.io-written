@@ -147,6 +147,7 @@ var fontSize = store.get("sb-essay-font", 0);
 var showWatch = store.get("sb-essay-watch", true);
 
 var chap = -1, level = -1, statusFilter = -1, search = "";
+var srcSel = null;
 var randomMode = false, seed = 0, idx = 0, showAnswer = false;
 var deck = [];
 
@@ -162,6 +163,7 @@ function buildDeck() {
     if (chap !== -1 && q.ch !== chap) return false;
     if (level !== -1 && q.lv !== level) return false;
     if (statusFilter !== -1 && (statuses[q.id] || 0) !== statusFilter) return false;
+    if (srcSel !== null && (q.s || "") !== srcSel) return false;
     if (search !== "" && (q.q + q.a + q.e).indexOf(search) === -1) return false;
     return true;
   });
@@ -171,6 +173,10 @@ function buildDeck() {
 function doneCount() { var n = 0; QUESTIONS.forEach(function(q) { if ((statuses[q.id] || 0) > 0) n++; }); return n; }
 function stCount(k) { var n = 0; QUESTIONS.forEach(function(q) { if ((statuses[q.id] || 0) === k) n++; }); return n; }
 function chapCount(ci) { return QUESTIONS.filter(function(q) { return q.ch === ci; }).length; }
+var SRCS = [];
+QUESTIONS.forEach(function(q) { if (q.s && SRCS.indexOf(q.s) === -1) SRCS.push(q.s); });
+SRCS.sort();
+function srcCount(s) { return QUESTIONS.filter(function(q) { return (q.s || "") === s; }).length; }
 
 // ===================== ストップウォッチ =====================
 function fmt(ms) {
@@ -220,6 +226,22 @@ function renderChips() {
   });
 }
 
+function renderSrcChips() {
+  var html = '<button class="chip' + (srcSel === null ? " on" : "") + '" data-i="-1">すべて</button>';
+  SRCS.forEach(function(s, i) {
+    html += '<button class="chip' + (srcSel === s ? " on" : "") + '" data-i="' + i + '">' + esc(s) + ' <span class="cnt">(' + srcCount(s) + ')</span></button>';
+  });
+  html += '<button class="chip' + (srcSel === "" ? " on" : "") + '" data-i="-2">出典なし <span class="cnt">(' + srcCount("") + ')</span></button>';
+  $("srcchips").innerHTML = html;
+  Array.prototype.forEach.call($("srcchips").children, function(b) {
+    b.onclick = function() {
+      var i = parseInt(b.getAttribute("data-i"), 10);
+      srcSel = i === -1 ? null : (i === -2 ? "" : SRCS[i]);
+      onFilterChange();
+    };
+  });
+}
+
 function renderSeg(id, val, setter) {
   Array.prototype.forEach.call($(id).children, function(b) {
     var v = parseInt(b.getAttribute("data-v"), 10);
@@ -232,6 +254,7 @@ function onFilterChange() {
   idx = 0; showAnswer = false;
   deck = buildDeck();
   renderChips();
+  renderSrcChips();
   renderSeg("lvseg", level, function(v) { level = v; });
   renderSeg("stseg", statusFilter, function(v) { statusFilter = v; });
   $("rand").className = "randbtn" + (randomMode ? " on" : "");
@@ -314,7 +337,7 @@ $("rand").onclick = function() {
 };
 $("search").addEventListener("input", function(e) { search = e.target.value; idx = 0; showAnswer = false; deck = buildDeck(); render(); });
 $("fclear").onclick = function() {
-  chap = -1; level = -1; statusFilter = -1; search = ""; randomMode = false;
+  chap = -1; level = -1; statusFilter = -1; search = ""; randomMode = false; srcSel = null;
   $("search").value = "";
   onFilterChange();
 };
@@ -345,4 +368,5 @@ setWatchUI();
 renderWatch();
 deck = buildDeck();
 renderChips();
+renderSrcChips();
 render();
