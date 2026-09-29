@@ -48,6 +48,10 @@
   .clearbtn { font-size: .72rem; color: #9ca3af; text-decoration: underline; background: none; border: none; cursor: pointer; }
   .pos { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; color: #6b7280; margin-bottom: 12px; }
   .pos b { color: #111827; }
+  .posr { display: flex; align-items: center; gap: 10px; }
+  .randbtn { border-radius: 999px; font-size: .78rem; font-weight: 700; padding: 8px 16px; border: 1px solid #cbd5e1; background: #fff; color: #374151; cursor: pointer; }
+  .randbtn:hover { background: #f1f5f9; }
+  .randbtn.on { background: #111827; color: #fff; border-color: #111827; }
   .qcard { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); overflow: hidden; }
   .qhead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 20px 8px; border-bottom: 1px solid #f3f4f6; }
   .qno { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 1.15rem; }
@@ -111,7 +115,7 @@
 </header>
 <main>
   <details class="filters" id="filters">
-    <summary>▾ 出題範囲・条件の設定(単元 / 基本・発展 / 理解度 / ランダム / 検索)</summary>
+    <summary>▾ 出題範囲・条件の設定(単元 / 基本・発展 / 理解度 / 検索)</summary>
     <div class="fchips" id="chapchips"></div>
     <div class="frow2">
       <div class="seg" id="lvseg">
@@ -123,12 +127,11 @@
         <button data-v="2">うろ覚え<span id="c2"></span></button>
         <button data-v="3">要復習<span id="c3"></span></button>
       </div>
-      <button id="rand" class="chip">🎲 ランダム出題</button>
       <input id="search" placeholder="🔍 キーワード検索(例:光合成)" />
       <button id="fclear" class="clearbtn">条件クリア</button>
     </div>
   </details>
-  <div class="pos"><span>第 <b id="posn">1</b> 問目 / 全<span id="deckn"></span>問<span id="randtag"></span></span><span>⌨️ ← / → キーでも移動できます</span></div>
+  <div class="pos"><span>第 <b id="posn">1</b> 問目 / 全<span id="deckn"></span>問<span id="randtag"></span></span><span class="posr"><button id="rand" class="randbtn">🎲 ランダム出題</button><span class="kbhint">⌨️ ← / → キーでも移動できます</span></span></div>
   <article class="qcard" id="qcard"></article>
   <div class="nav">
     <button id="prev" class="nbtn">← 前の問題</button>
@@ -137,7 +140,7 @@
   </div>
   <footer>
     <p>学習状態・文字サイズ・タイマー設定は自動保存されます(同じ端末・ブラウザで有効)</p>
-    <p style="margin-top:4px">セミナー生物「論述問題」(No.343〜471)にもとづく学習用アプリ(作成:ClaudeFable5)</p> 
+    <p style="margin-top:4px">セミナー生物「論述問題」(No.343〜471)にもとづく学習用アプリ</p>
   </footer>
 </main>
 <script>
@@ -292,6 +295,7 @@ var showWatch = store.get("sb-essay-watch", true);
 
 var chap = -1, level = -1, statusFilter = -1, search = "";
 var randomMode = false, seed = 0, idx = 0, showAnswer = false;
+var deck = [];
 var watchMs = 0, watchRunning = false, tick = null;
 
 var $ = function(id) { return document.getElementById(id); };
@@ -372,16 +376,16 @@ function renderSeg(id, val, setter) {
 
 function onFilterChange() {
   idx = 0; showAnswer = false;
+  deck = buildDeck();
   renderChips();
   renderSeg("lvseg", level, function(v) { level = v; });
   renderSeg("stseg", statusFilter, function(v) { statusFilter = v; });
-  $("rand").className = "chip" + (randomMode ? " on" : "");
+  $("rand").className = "randbtn" + (randomMode ? " on" : "");
   render();
 }
 
 function render() {
   renderHeader();
-  var deck = buildDeck();
   $("deckn").textContent = deck.length;
   $("randtag").textContent = randomMode && deck.length ? "(ランダム)" : "";
   var i = Math.min(idx, Math.max(deck.length - 1, 0));
@@ -411,7 +415,7 @@ function render() {
     '</div>' +
     '<button class="ansbtn' + (showAnswer ? " open" : "") + '" id="ansbtn">' + (showAnswer ? "解答・解説を閉じる ▲" : "解答・解説を表示 ▼") + '</button>' +
     '<div class="answer' + (showAnswer ? " show" : "") + '" id="ansbox">' +
-      '<div class="anslabel">✍️ 解答</div><div class="ansbox">' + esc(q.a) + '</div>' +
+      '<div class="anslabel">✍️ 模範解答</div><div class="ansbox">' + esc(q.a) + '</div>' +
       '<div class="anslabel">✅ Check point</div><div class="ansbox">' + esc(q.c) + '</div>' +
       '<div class="anslabel">💡 解法のポイント</div><div class="ansbox">' + esc(q.e) + '</div>' +
       '<div class="ugrow"><span class="ulabel">理解度チェック:</span>' +
@@ -433,7 +437,7 @@ function render() {
 }
 
 function goPrev() { if (idx > 0) { idx--; showAnswer = false; render(); } }
-function goNext() { var deck = buildDeck(); if (idx < deck.length - 1) { idx++; showAnswer = false; render(); } }
+function goNext() { if (idx < deck.length - 1) { idx++; showAnswer = false; render(); } }
 
 // ===================== イベント =====================
 $("prev").onclick = goPrev;
@@ -442,8 +446,18 @@ $("home").onclick = function() { idx = 0; showAnswer = false; render(); };
 $("wt").onclick = function() { showWatch = !showWatch; store.set("sb-essay-watch", showWatch); setWatchUI(); };
 $("tstart").onclick = startStop;
 $("treset").onclick = function() { watchRunning = false; clearInterval(tick); watchMs = 0; renderWatch(); $("tstart").textContent = "スタート"; $("tstart").className = "tbtn"; };
-$("rand").onclick = function() { randomMode = !randomMode; seed++; idx = 0; showAnswer = false; onFilterChange(); };
-$("search").addEventListener("input", function(e) { search = e.target.value; idx = 0; showAnswer = false; render(); });
+$("rand").onclick = function() {
+  randomMode = !randomMode;
+  var curId = deck.length ? deck[Math.min(idx, deck.length - 1)].id : null;
+  deck = buildDeck();
+  idx = 0;
+  if (curId !== null) {
+    for (var j = 0; j < deck.length; j++) { if (deck[j].id === curId) { idx = j; break; } }
+  }
+  $("rand").className = "randbtn" + (randomMode ? " on" : "");
+  render();
+};
+$("search").addEventListener("input", function(e) { search = e.target.value; idx = 0; showAnswer = false; deck = buildDeck(); render(); });
 $("fclear").onclick = function() {
   chap = -1; level = -1; statusFilter = -1; search = ""; randomMode = false;
   $("search").value = "";
@@ -474,6 +488,7 @@ $("totalq2").textContent = QUESTIONS.length;
 applyFont();
 setWatchUI();
 renderWatch();
+deck = buildDeck();
 renderChips();
 render();
 </script>
