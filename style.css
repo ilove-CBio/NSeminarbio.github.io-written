@@ -31,6 +31,7 @@
   .chip:hover { background: #f1f5f9; }
   .chip.on { background: #111827; color: #fff; border-color: #111827; }
   .chip .cnt { opacity: .6; }
+  .flabel { font-size: .7rem; font-weight: 700; color: #9ca3af; margin-top: 14px; }
   .seg { display: flex; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; font-size: .72rem; font-weight: 700; }
   .seg button { border: none; background: #fff; color: #4b5563; padding: 6px 12px; cursor: pointer; }
   .seg button + button { border-left: 1px solid #e5e7eb; }
@@ -41,6 +42,10 @@
   .clearbtn { font-size: .72rem; color: #9ca3af; text-decoration: underline; background: none; border: none; cursor: pointer; }
   .pos { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; color: #6b7280; margin-bottom: 12px; }
   .pos b { color: #111827; }
+  .posr { display: flex; align-items: center; gap: 10px; }
+  .randbtn { border-radius: 999px; font-size: .78rem; font-weight: 700; padding: 8px 16px; border: 1px solid #cbd5e1; background: #fff; color: #374151; cursor: pointer; }
+  .randbtn:hover { background: #f1f5f9; }
+  .randbtn.on { background: #111827; color: #fff; border-color: #111827; }
   .qcard { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); overflow: hidden; }
   .qhead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 20px 8px; border-bottom: 1px solid #f3f4f6; }
   .qno { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 1.15rem; }
